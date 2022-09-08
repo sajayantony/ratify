@@ -89,9 +89,8 @@ notation sign --plain-http $IMAGE
 echo '{"version": "0.0.0.0", "artifact": "'${IMAGE}'", "contents": "good"}' > sbom.json
 
 # Push to the registry with the oras cli
-oras push ${REGISTRY}/${REPO} \
+oras attach $IMAGE \
   --artifact-type sbom/example \
-  --subject $IMAGE \
   --plain-http \
   sbom.json:application/json
 ```
@@ -114,7 +113,7 @@ This completes the creation of the supply chain graph.
 ```bash
 cat <<EOF > ~/.ratify/config.json 
 { 
-    "stores": { 
+    "store": { 
         "version": "1.0.0", 
         "plugins": [ 
             { 
@@ -122,14 +121,17 @@ cat <<EOF > ~/.ratify/config.json
             }
         ]
     },
-    "policies": {
+    "policy": {
         "version": "1.0.0",
-        "artifactVerificationPolicies": {
-            "application/vnd.cncf.notary.v2.signature": "any",
-            "sbom/example": "all"
+        "plugin": {
+            "name": "configPolicy",
+            "artifactVerificationPolicies": {
+                "application/vnd.cncf.notary.v2.signature": "any",
+                "sbom/example": "all"
+            }
         }
     },
-    "verifiers": {
+    "verifier": {
         "version": "1.0.0",
         "plugins": [
             {
