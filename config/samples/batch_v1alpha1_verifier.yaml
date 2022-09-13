@@ -1,0 +1,6 @@
+apiVersion: batch.ratify.deislabs.io/v1alpha1
+kind: Verifier
+metadata:
+  name: verifier-sample
+spec:
+  # TODO(user): Add fields here

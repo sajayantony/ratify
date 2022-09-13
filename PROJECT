@@ -1,6 +1,16 @@
-domain: github.com/deislabs/ratify
+domain: ratify.deislabs.io
 layout:
 - go.kubebuilder.io/v3
 projectName: ratifycrd2
 repo: github.com/deislabs/ratify
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: ratify.deislabs.io
+  group: batch
+  kind: Verifier
+  path: github.com/deislabs/ratify/api/v1alpha1
+  version: v1alpha1
 version: "3"
