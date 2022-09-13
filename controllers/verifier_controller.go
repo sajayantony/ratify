@@ -47,7 +47,7 @@ type VerifierReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.2/pkg/reconcile
 func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log.Log.Info("Verifier Reconcile called")
+
 	_ = log.FromContext(ctx)
 
 	var verifier batchv1alpha1.Verifier
@@ -59,6 +59,10 @@ func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		// on deleted requests.
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
+	log.Log.Info("verifier %v", verifier.Name)
+	//log.Log.Info("verifier %d", verifier.ArtifactTypes)
+	//log.Log.Info("verifier %d", verifier.Parameters)
 
 	return ctrl.Result{}, nil
 }

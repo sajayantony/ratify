@@ -3,4 +3,7 @@ kind: Verifier
 metadata:
   name: verifier-sample
 spec:
-  # TODO(user): Add fields here
+  name: notaryv2
+  artifactTypes: application/vnd.cncf.notary.v2.signature
+  parameters:
+    certName: CertA
