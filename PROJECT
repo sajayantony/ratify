@@ -1,0 +1,6 @@
+domain: github.com/deislabs/ratify
+layout:
+- go.kubebuilder.io/v3
+projectName: ratifycrd2
+repo: github.com/deislabs/ratify
+version: "3"
