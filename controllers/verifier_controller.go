@@ -47,9 +47,18 @@ type VerifierReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.2/pkg/reconcile
 func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log.Log.Info("Verifier Reconcile called")
 	_ = log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	var verifier batchv1alpha1.Verifier
+
+	if err := r.Get(ctx, req.NamespacedName, &verifier); err != nil {
+		log.Log.Error(err, "unable to fetch verifier")
+		// we'll ignore not-found errors, since they can't be fixed by an immediate
+		// requeue (we'll need to wait for a new notification), and we can get them
+		// on deleted requests.
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
 
 	return ctrl.Result{}, nil
 }

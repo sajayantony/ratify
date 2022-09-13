@@ -1,0 +1,33 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - batch.ratify.deislabs.io
+  resources:
+  - verifiers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - batch.ratify.deislabs.io
+  resources:
+  - verifiers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - batch.ratify.deislabs.io
+  resources:
+  - verifiers/status
+  verbs:
+  - get
+  - patch
+  - update

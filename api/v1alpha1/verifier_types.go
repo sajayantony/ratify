@@ -18,18 +18,24 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+//type VerifierParameters map[string]interface{}
 
 // VerifierSpec defines the desired state of Verifier
 type VerifierSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Verifier. Edit verifier_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Name of the verifier
+	Name string `json:"name,omitempty"`
+
+	// The type of artifact this verifier handles
+	ArtifactTypes string `json:"artifactTypes,omitempty"`
+
+	// Parameters of this verifier
+	Parameters runtime.RawExtension `json:"parameters,omitempty"`
 }
 
 // VerifierStatus defines the observed state of Verifier
