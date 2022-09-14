@@ -18,6 +18,8 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -60,9 +62,31 @@ func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	log.Log.Info("verifier %v", verifier.Name)
-	//log.Log.Info("verifier %d", verifier.ArtifactTypes)
-	//log.Log.Info("verifier %d", verifier.Parameters)
+	log.Log.Info("verifier " + verifier.Spec.Name)
+	log.Log.Info("ArtifactTypes " + verifier.Spec.ArtifactTypes)
+
+	myString := string(verifier.Spec.Parameters.Raw)
+	log.Log.Info("Raw string " + myString)
+
+	var p map[string]interface{}
+	err := json.Unmarshal(verifier.Spec.Parameters.Raw, &p)
+
+	if err != nil {
+		// TODO: are there any verifier with no parameters
+		log.Log.Error(err, "unable to decode verifier parameters")
+	}
+
+	for key, value := range p {
+		switch c := value.(type) {
+		case string:
+			fmt.Printf("Item %q is a string, containing %q\n", key, c)
+			log.Log.Info("key  " + key + ", value" + value.(string))
+		case float64:
+			fmt.Printf("Looks like item %q is a number, specifically %f\n", key, value)
+		default:
+			fmt.Printf("Not sure what type item %q is, but I think it might be %T\n", key, value)
+		}
+	}
 
 	return ctrl.Result{}, nil
 }

@@ -5,5 +5,7 @@ metadata:
 spec:
   name: notaryv2
   artifactTypes: application/vnd.cncf.notary.v2.signature
-  parameters:
-    certName: CertA
+  parameters: 
+    verificationCerts: /usr/local/ratify-certs # currently verifier load from path on disk
+ 
+     

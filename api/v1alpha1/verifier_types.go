@@ -34,6 +34,7 @@ type VerifierSpec struct {
 	// The type of artifact this verifier handles
 	ArtifactTypes string `json:"artifactTypes,omitempty"`
 
+	// +kubebuilder:pruning:PreserveUnknownFields
 	// Parameters of this verifier
 	Parameters runtime.RawExtension `json:"parameters,omitempty"`
 }
