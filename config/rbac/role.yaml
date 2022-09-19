@@ -6,7 +6,7 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - batch.ratify.deislabs.io
+  - config.ratify.deislabs.io
   resources:
   - verifiers
   verbs:
@@ -18,13 +18,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - batch.ratify.deislabs.io
+  - config.ratify.deislabs.io
   resources:
   - verifiers/finalizers
   verbs:
   - update
 - apiGroups:
-  - batch.ratify.deislabs.io
+  - config.ratify.deislabs.io
   resources:
   - verifiers/status
   verbs:

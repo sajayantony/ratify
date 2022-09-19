@@ -5,9 +5,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.9.2
   creationTimestamp: null
-  name: verifiers.batch.ratify.deislabs.io
+  name: verifiers.config.ratify.deislabs.io
 spec:
-  group: batch.ratify.deislabs.io
+  group: config.ratify.deislabs.io
   names:
     kind: Verifier
     listKind: VerifierList

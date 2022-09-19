@@ -9,7 +9,7 @@ resources:
     namespaced: true
   controller: true
   domain: ratify.deislabs.io
-  group: batch
+  group: config
   kind: Verifier
   path: github.com/deislabs/ratify/api/v1alpha1
   version: v1alpha1

@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	batchv1alpha1 "github.com/deislabs/ratify/api/v1alpha1"
+	configv1alpha1 "github.com/deislabs/ratify/api/v1alpha1"
 )
 
 // VerifierReconciler reconciles a Verifier object
@@ -35,9 +35,9 @@ type VerifierReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=batch.ratify.deislabs.io,resources=verifiers,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=batch.ratify.deislabs.io,resources=verifiers/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=batch.ratify.deislabs.io,resources=verifiers/finalizers,verbs=update
+//+kubebuilder:rbac:groups=config.ratify.deislabs.io,resources=verifiers,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=config.ratify.deislabs.io,resources=verifiers/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=config.ratify.deislabs.io,resources=verifiers/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -52,7 +52,7 @@ func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	_ = log.FromContext(ctx)
 
-	var verifier batchv1alpha1.Verifier
+	var verifier configv1alpha1.Verifier
 
 	if err := r.Get(ctx, req.NamespacedName, &verifier); err != nil {
 		log.Log.Error(err, "unable to fetch verifier")
@@ -94,6 +94,6 @@ func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 // SetupWithManager sets up the controller with the Manager.
 func (r *VerifierReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&batchv1alpha1.Verifier{}).
+		For(&configv1alpha1.Verifier{}).
 		Complete(r)
 }
