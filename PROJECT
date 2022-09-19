@@ -13,4 +13,13 @@ resources:
   kind: Verifier
   path: github.com/deislabs/ratify/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: ratify.deislabs.io
+  group: config
+  kind: Store
+  path: github.com/deislabs/ratify/api/v1alpha1
+  version: v1alpha1
 version: "3"
