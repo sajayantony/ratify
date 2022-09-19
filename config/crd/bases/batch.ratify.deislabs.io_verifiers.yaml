@@ -35,6 +35,9 @@ spec:
           spec:
             description: VerifierSpec defines the desired state of Verifier
             properties:
+              address:
+                description: '# Optional. URL/file path'
+                type: string
               artifactTypes:
                 description: The type of artifact this verifier handles
                 type: string

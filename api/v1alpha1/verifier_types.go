@@ -34,6 +34,9 @@ type VerifierSpec struct {
 	// The type of artifact this verifier handles
 	ArtifactTypes string `json:"artifactTypes,omitempty"`
 
+	// # Optional. URL/file path
+	Address string `json:"address,omitempty"`
+
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// Parameters of this verifier
 	Parameters runtime.RawExtension `json:"parameters,omitempty"`
