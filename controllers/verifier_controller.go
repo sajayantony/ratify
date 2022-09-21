@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -27,6 +26,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	configv1alpha1 "github.com/deislabs/ratify/api/v1alpha1"
+	vr "github.com/deislabs/ratify/pkg/verifier"
+	"github.com/deislabs/ratify/pkg/verifier/config"
+	vf "github.com/deislabs/ratify/pkg/verifier/factory"
 )
 
 // VerifierReconciler reconciles a Verifier object
@@ -34,6 +36,10 @@ type VerifierReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
+
+var (
+	verifiers []vr.ReferenceVerifier
+)
 
 //+kubebuilder:rbac:groups=config.ratify.deislabs.io,resources=verifiers,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=config.ratify.deislabs.io,resources=verifiers/status,verbs=get;update;patch
@@ -76,18 +82,24 @@ func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		log.Log.Error(err, "unable to decode verifier parameters")
 	}
 
+	// setup verifier config map
+	// TODO: get json name of 'name'
+	verifierConfig := config.VerifierConfig{}
+	verifierConfig["name"] = verifier.Spec.Name
+	verifierConfig["artifactTypes"] = verifier.Spec.ArtifactTypes
+
 	for key, value := range p {
-		switch c := value.(type) {
-		case string:
-			fmt.Printf("Item %q is a string, containing %q\n", key, c)
-			log.Log.Info("key  " + key + ", value" + value.(string))
-		case float64:
-			fmt.Printf("Looks like item %q is a number, specifically %f\n", key, value)
-		default:
-			fmt.Printf("Not sure what type item %q is, but I think it might be %T\n", key, value)
-		}
+		verifierConfig[key] = value
 	}
 
+	// TODO: Create new verifier or replace existing
+	// TODO: how do we get version from the Crd
+	verifierReference, err := vf.CreateVerifierFromConfig(verifierConfig, "1.0", []string{verifier.Spec.Address})
+	if err != nil {
+		log.Log.Error(err, "unable to create verifier from verifier config")
+	} else {
+		verifiers = append(verifiers, verifierReference)
+	}
 	return ctrl.Result{}, nil
 }
 

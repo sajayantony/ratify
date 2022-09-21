@@ -6,6 +6,6 @@ spec:
   name: notaryv2
   artifactTypes: application/vnd.cncf.notary.v2.signature
   parameters:
-    reference: {{ include "ratify.akv.secretProviderClassName" . }}
-   
+    verificationCerts: 
+    - /usr/local/ratify-certs
      

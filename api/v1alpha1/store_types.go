@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -34,9 +35,17 @@ type StoreSpec struct {
 	// # Optional. URL/file path
 	Address string `json:"address,omitempty"`
 
-	AuthProvider string `json:"address,omitempty"`
+	// Authentication method for the remote registry
+	AuthProvider AuthenticationProvider `json:"authprovider,omitempty"`
 
-	//Cosign enabled?
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// Parameters of this store
+	Parameters runtime.RawExtension `json:"parameters,omitempty"` // E.g. Cosign enabled
+
+}
+
+type AuthenticationProvider struct {
+	Mode string `json:"name,omitempty"`
 }
 
 // StoreStatus defines the observed state of Store

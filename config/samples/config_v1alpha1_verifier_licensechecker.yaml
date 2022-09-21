@@ -8,5 +8,6 @@ spec:
   parameters: 
     allowedLicenses: 
     - MIT
+    - MIT1
  
      
