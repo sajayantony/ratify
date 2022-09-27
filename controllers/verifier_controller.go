@@ -20,15 +20,15 @@ import (
 	"context"
 	"encoding/json"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
 	configv1alpha1 "github.com/deislabs/ratify/api/v1alpha1"
 	vr "github.com/deislabs/ratify/pkg/verifier"
 	"github.com/deislabs/ratify/pkg/verifier/config"
 	vf "github.com/deislabs/ratify/pkg/verifier/factory"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // VerifierReconciler reconciles a Verifier object
@@ -38,7 +38,7 @@ type VerifierReconciler struct {
 }
 
 var (
-	verifiers []vr.ReferenceVerifier
+	verifiersMap = map[string]vr.ReferenceVerifier{}
 )
 
 //+kubebuilder:rbac:groups=config.ratify.deislabs.io,resources=verifiers,verbs=get;list;watch;create;update;patch;delete
@@ -61,10 +61,16 @@ func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	var verifier configv1alpha1.Verifier
 
 	if err := r.Get(ctx, req.NamespacedName, &verifier); err != nil {
-		log.Log.Error(err, "unable to fetch verifier")
-		// we'll ignore not-found errors, since they can't be fixed by an immediate
-		// requeue (we'll need to wait for a new notification), and we can get them
-		// on deleted requests.
+
+		// SusanTODO, log a message if this is the last verifier
+		if apierrors.IsNotFound(err) {
+			log.Log.Info("Removing verifier " + req.Name)
+			delete(verifiersMap, req.Name)
+		} else {
+			log.Log.Error(err, "unable to fetch verifier")
+
+		}
+
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
@@ -74,32 +80,41 @@ func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	myString := string(verifier.Spec.Parameters.Raw)
 	log.Log.Info("Raw string " + myString)
 
-	var p map[string]interface{}
-	err := json.Unmarshal(verifier.Spec.Parameters.Raw, &p)
-
-	if err != nil {
-		// TODO: are there any verifier with no parameters
-		log.Log.Error(err, "unable to decode verifier parameters")
-	}
-
 	// setup verifier config map
-	// TODO: get json name of 'name'
+	// SusanTODO: get json name of 'name'
 	verifierConfig := config.VerifierConfig{}
 	verifierConfig["name"] = verifier.Spec.Name
 	verifierConfig["artifactTypes"] = verifier.Spec.ArtifactTypes
 
-	for key, value := range p {
-		verifierConfig[key] = value
+	if verifier.Spec.Address == "" {
+		//SusanTODO , handle address
+		log.Log.Info("Verifier addresss is empty")
 	}
 
-	// TODO: Create new verifier or replace existing
-	// TODO: how do we get version from the Crd
-	verifierReference, err := vf.CreateVerifierFromConfig(verifierConfig, "1.0", []string{verifier.Spec.Address})
+	var propertyMap map[string]interface{}
+	err := json.Unmarshal(verifier.Spec.Parameters.Raw, &propertyMap)
 	if err != nil {
+		log.Log.Error(err, "unable to decode verifier parameters", "Parameters.Raw", verifier.Spec.Parameters.Raw)
+	}
+
+	if propertyMap == nil {
+		log.Log.Info("verifier propertyMap is empty")
+	} else {
+		for key, value := range propertyMap {
+			verifierConfig[key] = value
+		}
+	}
+
+	// SusanTODO: how do we get version from the Crd
+	verifierReference, err := vf.CreateVerifierFromConfig(verifierConfig, "1.0.0", []string{verifier.Spec.Address})
+
+	if err != nil || verifierReference == nil {
 		log.Log.Error(err, "unable to create verifier from verifier config")
 	} else {
-		verifiers = append(verifiers, verifierReference)
+		verifiersMap[req.Name] = verifierReference
+		log.Log.Info("New verifier created")
 	}
+
 	return ctrl.Result{}, nil
 }
 
