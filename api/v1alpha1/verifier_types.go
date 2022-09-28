@@ -21,8 +21,6 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
-//type VerifierParameters map[string]interface{}
-
 // VerifierSpec defines the desired state of Verifier
 type VerifierSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster

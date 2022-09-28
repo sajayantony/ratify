@@ -35,10 +35,11 @@ import (
 type VerifierReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	//VerifiersMap map[string]vr.ReferenceVerifier
 }
 
 var (
-	verifiersMap = map[string]vr.ReferenceVerifier{}
+	VerifiersMap = map[string]vr.ReferenceVerifier{}
 )
 
 //+kubebuilder:rbac:groups=config.ratify.deislabs.io,resources=verifiers,verbs=get;list;watch;create;update;patch;delete
@@ -65,7 +66,7 @@ func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		// SusanTODO, log a message if this is the last verifier
 		if apierrors.IsNotFound(err) {
 			log.Log.Info("Removing verifier " + req.Name)
-			delete(verifiersMap, req.Name)
+			delete(VerifiersMap, req.Name)
 		} else {
 			log.Log.Error(err, "unable to fetch verifier")
 
@@ -111,7 +112,7 @@ func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	if err != nil || verifierReference == nil {
 		log.Log.Error(err, "unable to create verifier from verifier config")
 	} else {
-		verifiersMap[req.Name] = verifierReference
+		VerifiersMap[req.Name] = verifierReference
 		log.Log.Info("New verifier created")
 	}
 

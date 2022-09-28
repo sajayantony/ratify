@@ -17,14 +17,15 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+	_ "github.com/deislabs/ratify/pkg/policyprovider/configpolicy"
+	_ "github.com/deislabs/ratify/pkg/referrerstore/oras"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
-	"github.com/deislabs/ratify/cmd/ratify/cmd"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -34,13 +35,25 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	configv1alpha1 "github.com/deislabs/ratify/api/v1alpha1"
+	"github.com/deislabs/ratify/config"
 	"github.com/deislabs/ratify/controllers"
+	"github.com/deislabs/ratify/httpserver"
+	ef "github.com/deislabs/ratify/pkg/executor/core"
+	"github.com/deislabs/ratify/pkg/policyprovider"
+	"github.com/deislabs/ratify/pkg/referrerstore"
+	vr "github.com/deislabs/ratify/pkg/verifier"
+	"github.com/sirupsen/logrus"
 	//+kubebuilder:scaffold:imports
 )
 
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
+
+	//verifiersMap = map[string]vr.ReferenceVerifier{}
+	referrerMap []referrerstore.ReferrerStore
+
+	policy policyprovider.PolicyProvider
 )
 
 func init() {
@@ -48,6 +61,49 @@ func init() {
 
 	utilruntime.Must(configv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
+}
+
+func startServer() {
+
+	logrus.Infof("Initializing executor with config file at default config path")
+
+	configFilePath := ""
+	cf, err := config.Load(configFilePath)
+
+	stores, _, policyEnforcer, err := config.CreateFromConfig(cf)
+
+	if err != nil {
+		//logrus.Error("Config initializing from config %v", err)
+		os.Exit(1)
+	}
+
+	referrerMap = stores
+	policy = policyEnforcer
+
+	// initialize server
+	httpServerAddress := ":6001"
+	server, err := httpserver.NewServer(context.Background(), httpServerAddress, func() *ef.Executor {
+
+		var verifiers []vr.ReferenceVerifier
+		for _, value := range controllers.VerifiersMap {
+			verifiers = append(verifiers, value)
+		}
+
+		executor := ef.Executor{
+			Verifiers:      verifiers,
+			ReferrerStores: stores,
+			PolicyEnforcer: policyEnforcer,
+			Config:         &cf.ExecutorConfig,
+		}
+		return &executor
+	})
+	if err != nil {
+		os.Exit(1)
+	}
+	logrus.Infof("starting server at" + httpServerAddress)
+	if err := server.Run(); err != nil {
+		os.Exit(1)
+	}
 }
 
 func main() {
@@ -94,6 +150,7 @@ func main() {
 	if err = (&controllers.VerifierReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
+		//VerifiersMap: verifiersMap,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Verifier")
 		os.Exit(1)
@@ -116,12 +173,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	go startServer()
+
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
 
-	serverParam := cmd.ServeCmdOptions{HttpServerAddress: ":6001"}
-	cmd.Serve(serverParam)
 }
