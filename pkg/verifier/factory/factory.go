@@ -98,6 +98,8 @@ func CreateVerifiersFromConfig(verifiersConfig config.VerifiersConfig, defaultPl
 	if len(verifiersConfig.PluginBinDirs) == 0 {
 		verifiersConfig.PluginBinDirs = []string{defaultPluginPath}
 	}
+
+	// TODO: do we need to append defaultPlugin path?
 	for _, verifierConfig := range verifiersConfig.Verifiers {
 		verifier, err := CreateVerifierFromConfig(verifierConfig, verifiersConfig.Version, verifiersConfig.PluginBinDirs)
 		if err != nil {

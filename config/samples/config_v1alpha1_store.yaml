@@ -3,4 +3,12 @@ kind: Store
 metadata:
   name: store-sample
 spec:
-  # TODO(user): Add fields here
+  name: oras
+  parameters:
+    cosign-enabled: false
+    useHttp : false
+    localCachePath: "./local_oras_cache"
+    authProvider:
+      name: k8Secrets
+      secrets: 
+      - secretName: myregistrykey            

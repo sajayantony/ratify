@@ -25,6 +25,7 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "github.com/deislabs/ratify/pkg/policyprovider/configpolicy"
 	_ "github.com/deislabs/ratify/pkg/referrerstore/oras"
+	"github.com/deislabs/ratify/pkg/verifier"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -50,10 +51,9 @@ var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 
-	//verifiersMap = map[string]vr.ReferenceVerifier{}
-	referrerMap []referrerstore.ReferrerStore
-
-	policy policyprovider.PolicyProvider
+	configStores    []referrerstore.ReferrerStore
+	configVerifiers []verifier.ReferenceVerifier
+	policy          policyprovider.PolicyProvider
 )
 
 func init() {
@@ -70,33 +70,50 @@ func startServer() {
 	configFilePath := ""
 	cf, err := config.Load(configFilePath)
 
-	stores, _, policyEnforcer, err := config.CreateFromConfig(cf)
+	configStores, configVerifiers, policy, err := config.CreateFromConfig(cf)
 
 	if err != nil {
-		//logrus.Error("Config initializing from config %v", err)
+		logrus.Warnf("Config initializing from config %v", err)
 		os.Exit(1)
 	}
-
-	referrerMap = stores
-	policy = policyEnforcer
 
 	// initialize server
 	httpServerAddress := ":6001"
 	server, err := httpserver.NewServer(context.Background(), httpServerAddress, func() *ef.Executor {
 
-		var verifiers []vr.ReferenceVerifier
-		for _, value := range controllers.VerifiersMap {
-			verifiers = append(verifiers, value)
+		var activeVerifiers []vr.ReferenceVerifier
+		var activeStores []referrerstore.ReferrerStore
+
+		// check if there are active verifiers from crd controller
+		// else use verifiers from configuration
+		if len(controllers.VerifierMap) > 0 {
+			for _, value := range controllers.VerifierMap {
+				activeVerifiers = append(activeVerifiers, value)
+			}
+		} else {
+			activeVerifiers = configVerifiers
 		}
 
+		// check if there are active stores from crd controller
+		// else use stores from configuration
+		if len(controllers.StoreMap) > 0 {
+			for _, value := range controllers.StoreMap {
+				activeStores = append(activeStores, value)
+			}
+		} else {
+			activeStores = configStores
+		}
+
+		// return executor with latest configuration
 		executor := ef.Executor{
-			Verifiers:      verifiers,
-			ReferrerStores: stores,
-			PolicyEnforcer: policyEnforcer,
+			Verifiers:      activeVerifiers,
+			ReferrerStores: activeStores,
+			PolicyEnforcer: policy,
 			Config:         &cf.ExecutorConfig,
 		}
 		return &executor
 	})
+
 	if err != nil {
 		os.Exit(1)
 	}

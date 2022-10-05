@@ -36,14 +36,8 @@ spec:
             description: StoreSpec defines the desired state of Store
             properties:
               address:
-                description: '# Optional. URL/file path'
+                description: Plugin path, optional
                 type: string
-              authprovider:
-                description: Authentication method for the remote registry
-                properties:
-                  name:
-                    type: string
-                type: object
               name:
                 description: Name of the verifier
                 type: string

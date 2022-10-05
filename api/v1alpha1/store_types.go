@@ -32,20 +32,13 @@ type StoreSpec struct {
 	// Name of the verifier
 	Name string `json:"name,omitempty"`
 
-	// # Optional. URL/file path
+	// Plugin path, optional
 	Address string `json:"address,omitempty"`
-
-	// Authentication method for the remote registry
-	AuthProvider AuthenticationProvider `json:"authprovider,omitempty"`
 
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// Parameters of this store
 	Parameters runtime.RawExtension `json:"parameters,omitempty"` // E.g. Cosign enabled
 
-}
-
-type AuthenticationProvider struct {
-	Mode string `json:"name,omitempty"`
 }
 
 // StoreStatus defines the observed state of Store

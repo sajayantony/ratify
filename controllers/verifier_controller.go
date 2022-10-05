@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	configv1alpha1 "github.com/deislabs/ratify/api/v1alpha1"
 	vr "github.com/deislabs/ratify/pkg/verifier"
@@ -39,7 +40,9 @@ type VerifierReconciler struct {
 }
 
 var (
-	VerifiersMap = map[string]vr.ReferenceVerifier{}
+	// a map to track of active verifiers
+	VerifierMap     = map[string]vr.ReferenceVerifier{}
+	verifierVersion = "1.0.0"
 )
 
 //+kubebuilder:rbac:groups=config.ratify.deislabs.io,resources=verifiers,verbs=get;list;watch;create;update;patch;delete
@@ -63,60 +66,79 @@ func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	if err := r.Get(ctx, req.NamespacedName, &verifier); err != nil {
 
-		// SusanTODO, log a message if this is the last verifier
+		// SusanTODO, log a message for other active verifier
 		if apierrors.IsNotFound(err) {
-			log.Log.Info("Removing verifier " + req.Name)
-			delete(VerifiersMap, req.Name)
+			log.Log.Info(fmt.Sprintf("Delete event detected, removing verifier %v", req.Name))
 		} else {
 			log.Log.Error(err, "unable to fetch verifier")
-
 		}
 
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	log.Log.Info("verifier " + verifier.Spec.Name)
-	log.Log.Info("ArtifactTypes " + verifier.Spec.ArtifactTypes)
+	err := verifierAddOrReplace(verifier.Spec, req.Name)
 
-	myString := string(verifier.Spec.Parameters.Raw)
+	if err != nil {
+		log.Log.Error(err, "unable to create verifier from verifier crd")
+	}
+
+	return ctrl.Result{}, nil
+}
+
+// TODO, do we care about the namespace?
+// creates a verifier reference from CRD spec and add store to map
+func verifierAddOrReplace(spec configv1alpha1.VerifierSpec, objectName string) error {
+	verifierConfig, err := specToVerifierConfig(spec)
+
+	verifierReference, err := vf.CreateVerifierFromConfig(verifierConfig, verifierVersion, []string{spec.Address})
+
+	if err != nil || verifierReference == nil {
+		log.Log.Error(err, "unable to create verifier from verifier config")
+	} else {
+		VerifierMap[objectName] = verifierReference
+		log.Log.Info(fmt.Sprintf("New verifier '%v'added to verifier map", verifierReference.Name()))
+	}
+
+	return err
+}
+
+// remove verifier from map
+func verifierRemove(objectName string) {
+	delete(VerifierMap, objectName)
+}
+
+// returns a verifier reference from spec
+func specToVerifierConfig(verifierSpec configv1alpha1.VerifierSpec) (config.VerifierConfig, error) {
+	log.Log.Info("verifier " + verifierSpec.Name)
+	log.Log.Info("ArtifactTypes " + verifierSpec.ArtifactTypes)
+
+	myString := string(verifierSpec.Parameters.Raw)
 	log.Log.Info("Raw string " + myString)
 
-	// setup verifier config map
-	// SusanTODO: get json name of 'name'
 	verifierConfig := config.VerifierConfig{}
-	verifierConfig["name"] = verifier.Spec.Name
-	verifierConfig["artifactTypes"] = verifier.Spec.ArtifactTypes
+	// SusanTODO: get json name of 'name'
 
-	if verifier.Spec.Address == "" {
+	verifierConfig["name"] = verifierSpec.Name
+	verifierConfig["artifactTypes"] = verifierSpec.ArtifactTypes
+
+	if verifierSpec.Address == "" {
 		//SusanTODO , handle address
-		log.Log.Info("Verifier addresss is empty")
+		log.Log.Info("Verifier address is empty")
 	}
 
-	var propertyMap map[string]interface{}
-	err := json.Unmarshal(verifier.Spec.Parameters.Raw, &propertyMap)
-	if err != nil {
-		log.Log.Error(err, "unable to decode verifier parameters", "Parameters.Raw", verifier.Spec.Parameters.Raw)
-	}
-
-	if propertyMap == nil {
-		log.Log.Info("verifier propertyMap is empty")
-	} else {
+	if string(verifierSpec.Parameters.Raw) != "" {
+		var propertyMap map[string]interface{}
+		err := json.Unmarshal(verifierSpec.Parameters.Raw, &propertyMap)
+		if err != nil {
+			log.Log.Error(err, "unable to decode verifier parameters", "Parameters.Raw", verifierSpec.Parameters.Raw)
+			return config.VerifierConfig{}, err
+		}
 		for key, value := range propertyMap {
 			verifierConfig[key] = value
 		}
 	}
 
-	// SusanTODO: how do we get version from the Crd
-	verifierReference, err := vf.CreateVerifierFromConfig(verifierConfig, "1.0.0", []string{verifier.Spec.Address})
-
-	if err != nil || verifierReference == nil {
-		log.Log.Error(err, "unable to create verifier from verifier config")
-	} else {
-		VerifiersMap[req.Name] = verifierReference
-		log.Log.Info("New verifier created")
-	}
-
-	return ctrl.Result{}, nil
+	return verifierConfig, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

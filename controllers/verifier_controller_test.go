@@ -47,21 +47,6 @@ var _ = Describe("Verifier controller", func() {
 			}
 			Expect(k8sClient.Create(ctx, verifier)).Should(Succeed())
 
-			/*
-				we want to test the internal object created not the spec properties
-					verifierLookupKey := types.NamespacedName{Name: VerifierObjectName, Namespace: VerifierObjectNamespace}
-					createdVerifier := &configv1alpha1.Verifier{}
-
-					// We'll need to retry given that creation may not immediately happen.
-					Eventually(func() bool {
-						err := k8sClient.Get(ctx, verifierLookupKey, createdVerifier)
-						if err != nil {
-							return false
-						}
-						return true
-					}, timeout, interval).Should(BeTrue())
-
-					Expect(createdVerifier.Spec.Name).Should(Equal("1 * * * *"))*/
 		})
 	})
 
