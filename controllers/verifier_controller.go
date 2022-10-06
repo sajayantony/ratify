@@ -85,7 +85,7 @@ func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	return ctrl.Result{}, nil
 }
 
-// TODO, do we care about the namespace?
+// TODO, do we care about the namespace, do we want to to handle objects in the ratify deployed namespace?
 // creates a verifier reference from CRD spec and add store to map
 func verifierAddOrReplace(spec configv1alpha1.VerifierSpec, objectName string) error {
 	verifierConfig, err := specToVerifierConfig(spec)
@@ -96,7 +96,7 @@ func verifierAddOrReplace(spec configv1alpha1.VerifierSpec, objectName string) e
 		log.Log.Error(err, "unable to create verifier from verifier config")
 	} else {
 		VerifierMap[objectName] = verifierReference
-		log.Log.Info(fmt.Sprintf("New verifier '%v'added to verifier map", verifierReference.Name()))
+		log.Log.Info(fmt.Sprintf("New verifier '%v' added to verifier map", verifierReference.Name()))
 	}
 
 	return err

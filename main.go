@@ -25,8 +25,10 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "github.com/deislabs/ratify/pkg/policyprovider/configpolicy"
 	_ "github.com/deislabs/ratify/pkg/referrerstore/oras"
-	"github.com/deislabs/ratify/pkg/verifier"
+	_ "github.com/deislabs/ratify/pkg/verifier/notaryv2"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
+	"github.com/deislabs/ratify/pkg/verifier"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
