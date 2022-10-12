@@ -24,6 +24,7 @@ COPY . .
 RUN go build -o /app/out/ /app/cmd/ratify 
 RUN go build -o /app/out/plugins/ /app/plugins/verifier/sbom
 RUN go build -o /app/out/plugins/ /app/plugins/verifier/cosign
+RUN go build -a -o manager main.go
 
 FROM $BASEIMAGE
 LABEL org.opencontainers.image.source https://github.com/deislabs/ratify
@@ -35,6 +36,7 @@ WORKDIR /
 COPY --from=builder /app/out/ratify /app/
 COPY --from=builder /app/out/plugins ${RATIFY_FOLDER}/plugins
 COPY --from=builder /app/config/config.json ${RATIFY_FOLDER}
+COPY --from=builder /app/manager .
 
 ENV RATIFY_CONFIG=${RATIFY_FOLDER}
 
@@ -42,4 +44,5 @@ EXPOSE 6001
 
 USER 65532:65532
 
-ENTRYPOINT ["/app/ratify", "serve", "--http", ":6001"]
+ENTRYPOINT ["/app/manager"]
+

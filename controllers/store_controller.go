@@ -69,6 +69,7 @@ func (r *StoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		// SusanTODO, log a message for other active verifier
 		if apierrors.IsNotFound(err) {
 			log.Log.Info(fmt.Sprintf("Delete event detected, removing store %v", req.Name))
+			storeRemove(req.Name)
 		} else {
 			log.Log.Error(err, "unable to fetch store")
 		}

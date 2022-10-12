@@ -69,6 +69,7 @@ func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		// SusanTODO, log a message for other active verifier
 		if apierrors.IsNotFound(err) {
 			log.Log.Info(fmt.Sprintf("Delete event detected, removing verifier %v", req.Name))
+			verifierRemove(req.Name)
 		} else {
 			log.Log.Error(err, "unable to fetch verifier")
 		}
