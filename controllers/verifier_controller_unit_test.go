@@ -24,10 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-type NotaryParameters struct {
-	verificationCerts []string
-}
-
 func TestMain(m *testing.M) {
 	// make sure to reset verifierMap before each test run
 	VerifierMap = map[string]vr.ReferenceVerifier{}
@@ -35,12 +31,8 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func resetVerfierMap() {
-	VerifierMap = map[string]vr.ReferenceVerifier{}
-}
-
 func TestVerifierAdd_EmptyParameter(t *testing.T) {
-	resetVerfierMap()
+	resetVerifierMap()
 	var testVerifierSpec = configv1alpha1.VerifierSpec{
 		Name:          "notaryv2",
 		ArtifactTypes: "application/vnd.cncf.notary.v2.signature",
@@ -53,12 +45,12 @@ func TestVerifierAdd_EmptyParameter(t *testing.T) {
 }
 
 func TestVerifierAdd_WithParameters(t *testing.T) {
-	resetVerfierMap()
+	resetVerifierMap()
 	if len(VerifierMap) != 0 {
 		t.Fatalf("Verifier map expected size 0, actual %v", len(VerifierMap))
 	}
-	var parametersString = "{\"allowedLicenses\":[\"MIT\",\"Apache\"]}"
-	var testVerifierSpec = getLicenseCheckSpec(parametersString)
+
+	var testVerifierSpec = getDefaultLicenseCheckerSpec()
 
 	verifierAddOrReplace(testVerifierSpec, "testObject")
 	if len(VerifierMap) != 1 {
@@ -66,12 +58,12 @@ func TestVerifierAdd_WithParameters(t *testing.T) {
 	}
 }
 
-func TestVerifier_Update(t *testing.T) {
-	resetVerfierMap()
+func TestVerifier_UpdateAndDelete(t *testing.T) {
+	resetVerifierMap()
 	// add a verifier
-	var parametersString = "{\"allowedLicenses\":[\"MIT\",\"Apache\"]}"
+
 	var objectName = "testObject"
-	var testVerifierSpec = getLicenseCheckSpec(parametersString)
+	var testVerifierSpec = getDefaultLicenseCheckerSpec()
 
 	verifierAddOrReplace(testVerifierSpec, objectName)
 
@@ -80,18 +72,27 @@ func TestVerifier_Update(t *testing.T) {
 	}
 
 	// modify the verifier
-	parametersString = "{\"allowedLicenses\":[\"MIT\",\"GNU\"]}"
-	testVerifierSpec = getLicenseCheckSpec(parametersString)
+	var parametersString = "{\"allowedLicenses\":[\"MIT\",\"GNU\"]}"
+	testVerifierSpec = getLicenseCheckerFromParam(parametersString)
 	verifierAddOrReplace(testVerifierSpec, objectName)
 
 	// validate no verifier has been added
 	if len(VerifierMap) != 1 {
 		t.Fatalf("Verifier map should be 1 after replacement, actual %v", len(VerifierMap))
 	}
+
+	verifierRemove(objectName)
+
+	if len(VerifierMap) != 0 {
+		t.Fatalf("Verifier map should be 0 after deletion, actual %v", len(VerifierMap))
+	}
 }
 
-func getLicenseCheckSpec(parametersString string) configv1alpha1.VerifierSpec {
+func resetVerifierMap() {
+	VerifierMap = map[string]vr.ReferenceVerifier{}
+}
 
+func getLicenseCheckerFromParam(parametersString string) configv1alpha1.VerifierSpec {
 	var allowedLicenses = []byte(parametersString)
 
 	return configv1alpha1.VerifierSpec{
@@ -101,5 +102,9 @@ func getLicenseCheckSpec(parametersString string) configv1alpha1.VerifierSpec {
 			Raw: allowedLicenses,
 		},
 	}
+}
 
+func getDefaultLicenseCheckerSpec() configv1alpha1.VerifierSpec {
+	var parametersString = "{\"allowedLicenses\":[\"MIT\",\"Apache\"]}"
+	return getLicenseCheckerFromParam(parametersString)
 }
