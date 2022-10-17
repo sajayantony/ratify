@@ -17,6 +17,37 @@ SLEEP_TIME=1
     assert_success
     run kubectl run demo1 --image=ratify.azurecr.io/testimage:unsigned
     assert_failure
+
+    echo "cleaning up"
+    kubectl delete pod demo
+    run kubectl delete ns demo
+}
+
+@test "verifier CRD CRUD test" {
+    run kubectl apply -f ./config/samples/config_v1alpha1_verifier_licensechecker.yaml
+    assert_success
+    
+    run kubectl run demo2 --image=ratify.azurecr.io/testimage:signed
+    echo "Deployment should fail as license checker does not verify signature"
+    assert_failure
+
+    run kubectl apply -f ./config/samples/config_v1alpha1_verifier_notary.yaml
+    assert_success
+
+    run kubectl run demo2 --image=ratify.azurecr.io/testimage:signed
+    assert_success
+
+    run kubectl delete -f ./config/samples/config_v1alpha1_verifier_notary.yaml
+    assert_success
+
+    run kubectl run demo2 --image=ratify.azurecr.io/testimage:signed
+    assert_failure
+
+    echo "cleaning up"
+    run kubectl delete -f ./config/samples/config_v1alpha1_verifier_licensechecker.yaml
+    run kubectl delete -f ./config/samples/config_v1alpha1_verifier_notary.yaml
+    run kubectl delete ns demo2
+    run kubectl delete pod demo2
 }
 
 @test "configmap update test" {
