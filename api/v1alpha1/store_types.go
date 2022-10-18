@@ -47,8 +47,8 @@ type StoreStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
+//+kubebuilder:resource:scope=Namespaced
 //+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
 
 // Store is the Schema for the stores API
 type Store struct {

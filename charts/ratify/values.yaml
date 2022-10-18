@@ -56,3 +56,28 @@ oras:
     azureWorkloadIdentityEnabled: false
     k8secretsEnabled: false
     awsEcrBasicEnabled: false
+
+podAnnotations: {}
+podLabels: {}
+enableRuntimeDefaultSeccompProfile: true
+
+rbac:
+  create: true
+upgradeCRDs:
+  enabled: true
+  extraRules: []
+
+crds:
+  affinity: {}
+  tolerations: []
+  nodeSelector: {kubernetes.io/os: linux}
+  resources: {}
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+    runAsGroup: 65532
+    runAsNonRoot: true
+    runAsUser: 65532

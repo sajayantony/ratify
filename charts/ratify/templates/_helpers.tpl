@@ -12,6 +12,11 @@ Define secret provider class name.
 {{ include "ratify.fullname" . }}-akv-secret-provider
 {{- end }}
 
+{{- define "ratify.podLabels" -}}
+{{- if .Values.podLabels }}
+{{- toYaml .Values.podLabels | nindent 8 }}
+{{- end }}
+
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).

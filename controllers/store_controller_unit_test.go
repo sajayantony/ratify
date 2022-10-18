@@ -66,6 +66,7 @@ func TestStore_UpdateAndDelete(t *testing.T) {
 	var updatedSpec = configv1alpha1.StoreSpec{
 		Name: "oras",
 	}
+
 	storeAddOrReplace(updatedSpec, objectName)
 
 	// validate no Store has been added
@@ -83,6 +84,7 @@ func TestStore_UpdateAndDelete(t *testing.T) {
 func resetStoreMap() {
 	StoreMap = map[string]referrerstore.ReferrerStore{}
 }
+
 func getOrasStoreSpec() configv1alpha1.StoreSpec {
 	var parametersString = "{\"authProvider\":{\"name\":\"k8Secrets\",\"secrets\":[{\"secretName\":\"myregistrykey\"}]},\"cosign-enabled\":false,\"useHttp\":false}"
 	var storeParameters = []byte(parametersString)
