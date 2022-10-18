@@ -7,6 +7,5 @@ spec:
   artifactTypes: application/vnd.cncf.notary.v2.signature
   parameters:
     verificationCerts: 
-    #- ~/.config/notation/certificate/june71.io.crt
     - /usr/local/ratify-certs
      

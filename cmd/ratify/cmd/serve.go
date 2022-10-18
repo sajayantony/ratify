@@ -28,14 +28,14 @@ const (
 	serveUse = "serve"
 )
 
-type ServeCmdOptions struct {
+type serveCmdOptions struct {
 	configFilePath    string
-	HttpServerAddress string
+	httpServerAddress string
 }
 
 func NewCmdServe(argv ...string) *cobra.Command {
 
-	var opts ServeCmdOptions
+	var opts serveCmdOptions
 
 	cmd := &cobra.Command{
 		Use:     serveUse,
@@ -43,31 +43,30 @@ func NewCmdServe(argv ...string) *cobra.Command {
 		Example: "ratify server",
 		Args:    cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return Serve(opts)
-
+			return serve(opts)
 		},
 	}
 
 	flags := cmd.Flags()
 
-	flags.StringVar(&opts.HttpServerAddress, "http", "", "HTTP Address")
+	flags.StringVar(&opts.httpServerAddress, "http", "", "HTTP Address")
 	flags.StringVarP(&opts.configFilePath, "config", "c", "", "Config File Path")
 	return cmd
 }
 
-func Serve(opts ServeCmdOptions) error {
+func serve(opts serveCmdOptions) error {
 
 	getExecutor, err := config.GetExecutorAndWatchForUpdate(opts.configFilePath)
 	if err != nil {
 		return err
 	}
 
-	if opts.HttpServerAddress != "" {
-		server, err := httpserver.NewServer(context.Background(), opts.HttpServerAddress, getExecutor)
+	if opts.httpServerAddress != "" {
+		server, err := httpserver.NewServer(context.Background(), opts.httpServerAddress, getExecutor)
 		if err != nil {
 			return err
 		}
-		logrus.Infof("starting server at" + opts.HttpServerAddress)
+		logrus.Infof("starting server at" + opts.httpServerAddress)
 		if err := server.Run(); err != nil {
 			return err
 		}

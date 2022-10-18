@@ -16,6 +16,7 @@ Define secret provider class name.
 {{- if .Values.podLabels }}
 {{- toYaml .Values.podLabels | nindent 8 }}
 {{- end }}
+{{- end }}
 
 {{/*
 Create a default fully qualified app name.
