@@ -1,11 +1,10 @@
 /*
-Copyright 2022.
-
+Copyright The Ratify Authors.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,6 +30,7 @@ import (
 	"github.com/deislabs/ratify/pkg/referrerstore"
 	"github.com/deislabs/ratify/pkg/referrerstore/config"
 	sf "github.com/deislabs/ratify/pkg/referrerstore/factory"
+	"github.com/deislabs/ratify/pkg/referrerstore/types"
 )
 
 // StoreReconciler reconciles a Store object
@@ -42,7 +42,7 @@ type StoreReconciler struct {
 var (
 	// a map to track active stores
 	StoreMap = map[string]referrerstore.ReferrerStore{}
-	// version of the store
+	// default version of the store
 	storeVersion = "1.0.0"
 )
 
@@ -62,9 +62,8 @@ func (r *StoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 
 	if err := r.Get(ctx, req.NamespacedName, &store); err != nil {
 
-		// SusanTODO, log a message for other active verifier
 		if apierrors.IsNotFound(err) {
-			log.Log.Info(fmt.Sprintf("Delete event detected, removing store %v", req.Name))
+			log.Log.Info(fmt.Sprintf("deletion detected, removing store %v", req.Name))
 			storeRemove(req.Name)
 		} else {
 			log.Log.Error(err, "unable to fetch store")
@@ -89,7 +88,7 @@ func (r *StoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// creates a store reference from CRD spec and add store to map
+// Creates a store reference from CRD spec and add store to map
 func storeAddOrReplace(spec configv1alpha1.StoreSpec, objectName string) error {
 	storeConfig, err := specToStoreConfig(spec)
 
@@ -99,33 +98,26 @@ func storeAddOrReplace(spec configv1alpha1.StoreSpec, objectName string) error {
 		log.Log.Error(err, "unable to create store from store config")
 	} else {
 		StoreMap[objectName] = storeReference
-		log.Log.Info(fmt.Sprintf("New store '%v' added to verifier map", storeReference.Name()))
+		log.Log.Info(fmt.Sprintf("new store '%v' added to verifier map", storeReference.Name()))
 	}
 
 	return err
 }
 
-// remove store from map
+// Remove store from map
 func storeRemove(objectName string) {
 	delete(StoreMap, objectName)
 }
 
-// returns a store reference from spec
+// Returns a store reference from spec
 func specToStoreConfig(storeSpec configv1alpha1.StoreSpec) (config.StorePluginConfig, error) {
-	log.Log.Info("store " + storeSpec.Name)
 
 	myString := string(storeSpec.Parameters.Raw)
 	log.Log.Info("Raw string " + myString)
 
 	storeConfig := config.StorePluginConfig{}
-	// SusanTODO: get json name of 'name'
 
-	storeConfig["name"] = storeSpec.Name
-
-	if storeSpec.Address == "" {
-		//SusanTODO , handle address
-		log.Log.Info("store address is empty")
-	}
+	storeConfig[types.Name] = storeSpec.Name
 
 	if string(storeSpec.Parameters.Raw) != "" {
 		var propertyMap map[string]interface{}

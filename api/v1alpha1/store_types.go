@@ -21,12 +21,8 @@ import (
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // StoreSpec defines the desired state of Store
 type StoreSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Name of the verifier
@@ -36,14 +32,12 @@ type StoreSpec struct {
 	Address string `json:"address,omitempty"`
 
 	// +kubebuilder:pruning:PreserveUnknownFields
-	// Parameters of this store
-	Parameters runtime.RawExtension `json:"parameters,omitempty"` // E.g. Cosign enabled
-
+	// Parameters of the store
+	Parameters runtime.RawExtension `json:"parameters,omitempty"`
 }
 
 // StoreStatus defines the observed state of Store
 type StoreStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
 

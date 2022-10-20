@@ -1,11 +1,10 @@
 /*
-Copyright 2022.
-
+Copyright The Ratify Authors.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,6 +24,7 @@ import (
 	vr "github.com/deislabs/ratify/pkg/verifier"
 	"github.com/deislabs/ratify/pkg/verifier/config"
 	vf "github.com/deislabs/ratify/pkg/verifier/factory"
+	"github.com/deislabs/ratify/pkg/verifier/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -110,22 +110,14 @@ func verifierRemove(objectName string) {
 
 // returns a verifier reference from spec
 func specToVerifierConfig(verifierSpec configv1alpha1.VerifierSpec) (config.VerifierConfig, error) {
-	log.Log.Info("verifier " + verifierSpec.Name)
-	log.Log.Info("ArtifactTypes " + verifierSpec.ArtifactTypes)
 
 	myString := string(verifierSpec.Parameters.Raw)
 	log.Log.Info("Raw string " + myString)
 
 	verifierConfig := config.VerifierConfig{}
-	// SusanTODO: get json name of 'name'
 
-	verifierConfig["name"] = verifierSpec.Name
-	verifierConfig["artifactTypes"] = verifierSpec.ArtifactTypes
-
-	if verifierSpec.Address == "" {
-		//SusanTODO , handle address
-		log.Log.Info("Verifier address is empty")
-	}
+	verifierConfig[types.Name] = verifierSpec.Name
+	verifierConfig[types.ArtifactTypes] = verifierSpec.ArtifactTypes
 
 	if string(verifierSpec.Parameters.Raw) != "" {
 		var propertyMap map[string]interface{}

@@ -23,7 +23,6 @@ import (
 
 // VerifierSpec defines the desired state of Verifier
 type VerifierSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Name of the verifier
@@ -36,7 +35,7 @@ type VerifierSpec struct {
 	Address string `json:"address,omitempty"`
 
 	// +kubebuilder:pruning:PreserveUnknownFields
-	// Parameters of this verifier
+	// Parameters for this verifier
 	Parameters runtime.RawExtension `json:"parameters,omitempty"`
 }
 

@@ -19,38 +19,28 @@ SLEEP_TIME=1
     assert_failure
 
     echo "cleaning up"
-    kubectl delete pod demo
-    run kubectl delete ns demo
+    run kubectl delete pod demo
 }
 
-@test "verifier CRD CRUD test" {
-    run kubectl apply -f ./config/samples/config_v1alpha1_verifier_licensechecker.yaml
+@test "validate verifier crd add and delete" {
+    echo "delete notary verifier and validate deployment fails due to missing verifier"
+    run kubectl delete verifiers.config.ratify.deislabs.io/verifier-notary
     assert_success
-    
-    run kubectl run demo2 --image=ratify.azurecr.io/testimage:signed
-    echo "Deployment should fail as license checker does not verify signature"
+    run kubectl run demo --image=ratify.azurecr.io/testimage:signed
     assert_failure
 
+    echo "Add notary verifier and validate deployment succeeds"
     run kubectl apply -f ./config/samples/config_v1alpha1_verifier_notary.yaml
     assert_success
-
-    run kubectl run demo2 --image=ratify.azurecr.io/testimage:signed
+    run kubectl run demo --image=ratify.azurecr.io/testimage:signed
     assert_success
-
-    run kubectl delete -f ./config/samples/config_v1alpha1_verifier_notary.yaml
-    assert_success
-
-    run kubectl run demo2 --image=ratify.azurecr.io/testimage:signed
-    assert_failure
 
     echo "cleaning up"
-    run kubectl delete -f ./config/samples/config_v1alpha1_verifier_licensechecker.yaml
-    run kubectl delete -f ./config/samples/config_v1alpha1_verifier_notary.yaml
-    run kubectl delete ns demo2
-    run kubectl delete pod demo2
+    run kubectl delete pod demo
 }
 
 @test "configmap update test" {
+    skip "Skipping test for now as we are no longer watching for configfile update in a k8 environment.This test ensures we are watching config file updates in a non-kub scenario"
     run kubectl apply -f ./library/default/template.yaml
     assert_success
     sleep 5
