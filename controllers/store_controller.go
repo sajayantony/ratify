@@ -42,8 +42,6 @@ type StoreReconciler struct {
 var (
 	// a map to track active stores
 	StoreMap = map[string]referrerstore.ReferrerStore{}
-	// default version of the store
-	storeVersion = "1.0.0"
 )
 
 //+kubebuilder:rbac:groups=config.ratify.deislabs.io,resources=stores,verbs=get;list;watch;create;update;patch;delete
@@ -69,15 +67,16 @@ func (r *StoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 			log.Log.Error(err, "unable to fetch store")
 		}
 
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+		return ctrl.Result{}, err
 	}
 
 	err := storeAddOrReplace(store.Spec, req.Name)
-
 	if err != nil {
 		log.Log.Error(err, "unable to create store from store crd")
+		return ctrl.Result{}, err
 	}
 
+	// returning empty result and no error to indicate we’ve successfully reconciled this object
 	return ctrl.Result{}, nil
 }
 
@@ -92,16 +91,20 @@ func (r *StoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func storeAddOrReplace(spec configv1alpha1.StoreSpec, objectName string) error {
 	storeConfig, err := specToStoreConfig(spec)
 
-	storeReference, err := sf.CreateStoreFromConfig(storeConfig, storeVersion, []string{spec.Address})
+	// factory only support a single version of configuration today
+	// when we support multi version store CRD, we will also pass in the corresponding config version so factory can create different version of the object
+	storeConfigVersion := "1.0.0"
+	storeReference, err := sf.CreateStoreFromConfig(storeConfig, storeConfigVersion, []string{spec.Address})
 
 	if err != nil || storeReference == nil {
-		log.Log.Error(err, "unable to create store from store config")
+		log.Log.Error(err, "store factory failed to create store from store config")
+		return err
 	} else {
 		StoreMap[objectName] = storeReference
-		log.Log.Info(fmt.Sprintf("new store '%v' added to verifier map", storeReference.Name()))
+		log.Log.Info(fmt.Sprintf("store '%v' added to store map", storeReference.Name()))
 	}
 
-	return err
+	return nil
 }
 
 // Remove store from map
@@ -111,9 +114,6 @@ func storeRemove(objectName string) {
 
 // Returns a store reference from spec
 func specToStoreConfig(storeSpec configv1alpha1.StoreSpec) (config.StorePluginConfig, error) {
-
-	myString := string(storeSpec.Parameters.Raw)
-	log.Log.Info("Raw string " + myString)
 
 	storeConfig := config.StorePluginConfig{}
 

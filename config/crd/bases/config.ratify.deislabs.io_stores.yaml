@@ -42,7 +42,7 @@ spec:
                 description: Name of the verifier
                 type: string
               parameters:
-                description: Parameters of this store
+                description: Parameters of the store
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
             type: object

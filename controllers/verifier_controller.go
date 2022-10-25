@@ -18,6 +18,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	configv1alpha1 "github.com/deislabs/ratify/api/v1alpha1"
@@ -36,13 +37,11 @@ import (
 type VerifierReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	//VerifiersMap map[string]vr.ReferenceVerifier
 }
 
 var (
 	// a map to track of active verifiers
-	VerifierMap     = map[string]vr.ReferenceVerifier{}
-	verifierVersion = "1.0.0"
+	VerifierMap = map[string]vr.ReferenceVerifier{}
 )
 
 //+kubebuilder:rbac:groups=config.ratify.deislabs.io,resources=verifiers,verbs=get;list;watch;create;update;patch;delete
@@ -66,41 +65,53 @@ func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	if err := r.Get(ctx, req.NamespacedName, &verifier); err != nil {
 
-		// SusanTODO, log a message for other active verifier
 		if apierrors.IsNotFound(err) {
-			log.Log.Info(fmt.Sprintf("Delete event detected, removing verifier %v", req.Name))
+			log.Log.Info(fmt.Sprintf("delete event detected, removing verifier %v", req.Name))
 			verifierRemove(req.Name)
 		} else {
 			log.Log.Error(err, "unable to fetch verifier")
 		}
 
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+		return ctrl.Result{}, err
 	}
 
 	err := verifierAddOrReplace(verifier.Spec, req.Name)
 
 	if err != nil {
 		log.Log.Error(err, "unable to create verifier from verifier crd")
+		return ctrl.Result{}, err
 	}
 
+	// returning empty result and no error to indicate we’ve successfully reconciled this object
 	return ctrl.Result{}, nil
 }
 
-// TODO, do we care about the namespace, do we want to to handle objects in the ratify deployed namespace?
 // creates a verifier reference from CRD spec and add store to map
 func verifierAddOrReplace(spec configv1alpha1.VerifierSpec, objectName string) error {
-	verifierConfig, err := specToVerifierConfig(spec)
 
-	verifierReference, err := vf.CreateVerifierFromConfig(verifierConfig, verifierVersion, []string{spec.Address})
+	verifierConfig, err := specToVerifierConfig(spec)
+	if spec.Name == "test" {
+		err = errors.New("math: square root of negative number")
+	}
+	if err != nil {
+		log.Log.Error(err, "unable to convert crd specification to verifier config")
+		return err
+	}
+
+	// verifier factory only support a single version of configuration today
+	// when we support multi version verifier CRD, we will also pass in the corresponding config version so factory can create different version of the object
+	verifierConfigVersion := "1.0.0"
+	verifierReference, err := vf.CreateVerifierFromConfig(verifierConfig, verifierConfigVersion, []string{spec.Address})
 
 	if err != nil || verifierReference == nil {
 		log.Log.Error(err, "unable to create verifier from verifier config")
+		return err
 	} else {
 		VerifierMap[objectName] = verifierReference
-		log.Log.Info(fmt.Sprintf("New verifier '%v' added to verifier map", verifierReference.Name()))
+		log.Log.Info(fmt.Sprintf("verifier '%v' added to verifier map", verifierReference.Name()))
 	}
 
-	return err
+	return nil
 }
 
 // remove verifier from map
@@ -110,9 +121,6 @@ func verifierRemove(objectName string) {
 
 // returns a verifier reference from spec
 func specToVerifierConfig(verifierSpec configv1alpha1.VerifierSpec) (config.VerifierConfig, error) {
-
-	myString := string(verifierSpec.Parameters.Raw)
-	log.Log.Info("Raw string " + myString)
 
 	verifierConfig := config.VerifierConfig{}
 

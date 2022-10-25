@@ -3,9 +3,10 @@ kind: Verifier
 metadata:
   name: verifier-notary
 spec:
-  name: notaryv2
+  name: test
   artifactTypes: application/vnd.cncf.notary.v2.signature
+  address: "/user/local/Nexist"
   parameters:
     verificationCerts: 
-    - /usr/local/ratify-certs
+    - /usr/local/v1/test.pem
      

@@ -45,7 +45,7 @@ spec:
                 description: Name of the verifier
                 type: string
               parameters:
-                description: Parameters of this verifier
+                description: Parameters for this verifier
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
             type: object

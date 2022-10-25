@@ -27,7 +27,7 @@ ratifyTestCert: |
   c92MWya0Lw==
   -----END CERTIFICATE-----
 cosign:
-  enabled: true
+  enabled: false
   key: ""
 resources:
    limits:
