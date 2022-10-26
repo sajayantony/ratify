@@ -39,8 +39,8 @@ import (
 
 	configv1alpha1 "github.com/deislabs/ratify/api/v1alpha1"
 	"github.com/deislabs/ratify/config"
-	"github.com/deislabs/ratify/controllers"
 	"github.com/deislabs/ratify/httpserver"
+	"github.com/deislabs/ratify/pkg/controllers"
 	ef "github.com/deislabs/ratify/pkg/executor/core"
 	"github.com/deislabs/ratify/pkg/policyprovider"
 	"github.com/deislabs/ratify/pkg/referrerstore"
@@ -60,14 +60,13 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-
 	utilruntime.Must(configv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
 func startServer() {
 
-	logrus.Infof("Initializing executor with config file at default config path")
+	logrus.Infof("initializing executor with config file at default config path")
 
 	configFilePath := ""
 	cf, err := config.Load(configFilePath)
@@ -75,7 +74,7 @@ func startServer() {
 	configStores, configVerifiers, policy, err := config.CreateFromConfig(cf)
 
 	if err != nil {
-		logrus.Warnf("Config initializing from config %v", err)
+		logrus.Warnf("error initializing from config %v", err)
 		os.Exit(1)
 	}
 
@@ -169,7 +168,6 @@ func main() {
 	if err = (&controllers.VerifierReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
-		//VerifiersMap: verifiersMap,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Verifier")
 		os.Exit(1)

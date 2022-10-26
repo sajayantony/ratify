@@ -2,12 +2,14 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
+  labels:
+    heritage: '{{ .Release.Service }}'
+    release: '{{ .Release.Name }}'
   name: ratify-manager-rolebinding
-  namespace: default
 subjects:
 - kind: ServiceAccount
-  name: default 
-  namespace: default
+  name: ratify-admin 
+  namespace: '{{ .Release.Namespace }}'
 roleRef:
   kind: ClusterRole
   name: ratify-manager-role
