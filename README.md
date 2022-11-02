@@ -1,14 +1,16 @@
 # Ratify
 
-The project provides a framework to integrate scenarios that require
-verification of reference artifacts and provides a set of interfaces
-that can be consumed by various systems that can participate in
-artifact ratification.
+Is a policy engine as a binary executable and on Kubernetes which enables verification of artifact security metadata and admits for deployment only those that comply with policies you create.
 
-**WARNING:** This is experimental code. It is not considered production-grade
+**WARNING:** This is not considered production-grade code
 by its developers, nor is it "supported" software.
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/deislabs/ratify)](https://goreportcard.com/report/github.com/deislabs/ratify)
+[![build-pr](https://github.com/deislabs/ratify/actions/workflows/build-pr.yml/badge.svg)](https://github.com/deislabs/ratify/actions/workflows/build-pr.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/deislabs/ratify/badge)](https://api.securityscorecards.dev/projects/github.com/deislabs/ratify)
+
 ## Table of Contents
+
 - [Community Meetings](#community-meetings)
 - [Quick Start](#quick-start)
 - [Documents](#documents)
@@ -62,21 +64,22 @@ Once the installation is completed, you can test the deployment of an image that
 - This will successfully create the pod `demo`
 
 ```bash=
-kubectl run demo --image=ratify.azurecr.io/testimage:signed
-kubectl get pods -w
+kubectl run demo --image=wabbitnetworks.azurecr.io/test/net-monitor:signed
+kubectl get pods demo
 ```
-You will see the "successful" created pod in a CrashLoopBackoff because the container by design executes a shell script displaying text and then crashes.
+
+Optionally you can see the output of the pod logs via: `kubectl logs demo`
 
 - Now deploy an unsigned image
 
 ```bash=
-kubectl run demo1 --image=ratify.azurecr.io/testimage:unsigned
+kubectl run demo1 --image=wabbitnetworks.azurecr.io/test/net-monitor:unsigned
 ```
 
 You will see a deny message from Gatekeeper denying the request to create it as the image doesn't have any signatures.
 
 ```bash=
-Error from server (Forbidden): admission webhook "validation.gatekeeper.sh" denied the request: [ratify-constraint] Subject failed verification: ratify.azurecr.io/testimage:unsigned
+Error from server (Forbidden): admission webhook "validation.gatekeeper.sh" denied the request: [ratify-constraint] Subject failed verification: wabbitnetworks.azurecr.io/test/net-monitor:unsigned
 ```
 
 You just validated the container images in your k8s cluster!
@@ -88,6 +91,10 @@ kubectl delete -f https://deislabs.github.io/ratify/library/default/template.yam
 kubectl delete -f https://deislabs.github.io/ratify/library/default/samples/constraint.yaml
 helm delete ratify
 ```
+
+### Notes
+
+If the image reference provided resolves to an OCI Index or a Docker Manifest List, validation will occur ONLY at the index or manifest list level. Ratify currently does NOT support image validation based on automatic platform selection. For more information, [see this issue](https://github.com/deislabs/ratify/issues/101).
 
 ## Documents
 

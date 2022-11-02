@@ -13,11 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package core
+package azure
 
-import "errors"
-
-var (
-	// ErrReferrersNotFound is thrown when there aren't any references for an artifact
-	ErrReferrersNotFound = errors.New("no referrers found for this artifact")
+const (
+	dockerTokenLoginUsernameGUID string = "00000000-0000-0000-0000-000000000000"
+	AADResource                  string = "https://containerregistry.azure.net/.default"
 )
