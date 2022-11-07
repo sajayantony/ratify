@@ -36,7 +36,6 @@ WORKDIR /
 COPY --from=builder /app/out/ratify /app/
 COPY --from=builder /app/out/plugins ${RATIFY_FOLDER}/plugins
 COPY --from=builder /app/config/config.json ${RATIFY_FOLDER}
-COPY --from=builder /app/manager .
 
 ENV RATIFY_CONFIG=${RATIFY_FOLDER}
 
@@ -44,5 +43,5 @@ EXPOSE 6001
 
 USER 65532:65532
 
-ENTRYPOINT ["/app/manager"]
+ENTRYPOINT ["/app/ratify"]
 

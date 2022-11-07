@@ -22,7 +22,7 @@ ENVTEST_K8S_VERSION = 1.24.2
 all: build test
 
 .PHONY: build
-build: build-cli build-plugins build-main
+build: build-cli build-plugins
 
 .PHONY: build-cli
 build-cli:
@@ -35,10 +35,6 @@ build-plugins:
 	go build -o ./bin/plugins/ ./plugins/verifier/licensechecker
 	go build -o ./bin/plugins/ ./plugins/verifier/sample
 	go build -o ./bin/plugins/ ./plugins/verifier/sbom
-
-.PHONY: build-main
-build: generate fmt vet ## Build manager binary.
-	go build -o bin/manager main.go
 
 .PHONY: install
 install:

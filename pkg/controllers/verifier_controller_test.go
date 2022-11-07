@@ -61,14 +61,12 @@ func TestVerifierAdd_WithParameters(t *testing.T) {
 
 func TestVerifier_UpdateAndDelete(t *testing.T) {
 	resetVerifierMap()
-	// add a verifier
 
 	var resource = getResourceKey("testnamespace", "licensechecker")
-
 	var testVerifierSpec = getDefaultLicenseCheckerSpec()
 
+	// add a verifier
 	verifierAddOrReplace(testVerifierSpec, resource)
-
 	if len(VerifierMap) != 1 {
 		t.Fatalf("Verifier map expected size 1, actual %v", len(VerifierMap))
 	}

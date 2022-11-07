@@ -23,8 +23,9 @@ SLEEP_TIME=1
 }
 
 @test "validate crd add, replace and delete" {    
-    skip "TODO: setup local test registry to enable CRD e2e testing, below steps only works for local testing wtih an existing license checker crd"
-    echo "delete notary verifier and validate deployment fails due to missing verifier"
+    skip "TODO: setup local test registry to enable better CRD e2e testing, default crd should installed the notary verifier"
+    echo "adding license checker, delete notary verifier and validate deployment fails due to missing notary verifier"
+    run kubectl apply -f ./config/samples/config_v1alpha1_verifier_licensechecker.yaml
     run kubectl delete verifiers.config.ratify.deislabs.io/verifier-notary
     assert_success
     run kubectl run demo --image=ratify.azurecr.io/testimage:signed

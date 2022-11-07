@@ -53,7 +53,7 @@ func TestStore_UpdateAndDelete(t *testing.T) {
 	resetStoreMap()
 	// add a Store
 
-	var resource = getResourceKey("testnamespace", "testObject")
+	var resource = getResourceKey("testnamespace", "oras")
 
 	var testStoreSpec = getOrasStoreSpec()
 
@@ -96,5 +96,4 @@ func getOrasStoreSpec() configv1alpha1.StoreSpec {
 			Raw: storeParameters,
 		},
 	}
-
 }
