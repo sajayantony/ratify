@@ -1,11 +1,10 @@
 /*
-Copyright 2022.
-
+Copyright The Ratify Authors.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,10 +13,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package manager
 
 import (
-	"context"
 	"flag"
 	"os"
 
@@ -38,14 +36,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	configv1alpha1 "github.com/deislabs/ratify/api/v1alpha1"
-	"github.com/deislabs/ratify/config"
-	"github.com/deislabs/ratify/httpserver"
 	"github.com/deislabs/ratify/pkg/controllers"
-	ef "github.com/deislabs/ratify/pkg/executor/core"
 	"github.com/deislabs/ratify/pkg/policyprovider"
 	"github.com/deislabs/ratify/pkg/referrerstore"
-	vr "github.com/deislabs/ratify/pkg/verifier"
-	"github.com/sirupsen/logrus"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -64,67 +57,7 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
-func startServer() {
-
-	logrus.Infof("initializing executor with config file at default config path")
-
-	configFilePath := ""
-	cf, err := config.Load(configFilePath)
-
-	configStores, configVerifiers, policy, err := config.CreateFromConfig(cf)
-
-	if err != nil {
-		logrus.Warnf("error initializing from config %v", err)
-		os.Exit(1)
-	}
-
-	// initialize server
-	httpServerAddress := ":6001"
-	server, err := httpserver.NewServer(context.Background(), httpServerAddress, func() *ef.Executor {
-
-		var activeVerifiers []vr.ReferenceVerifier
-		var activeStores []referrerstore.ReferrerStore
-
-		// check if there are active verifiers from crd controller
-		// else use verifiers from configuration
-		if len(controllers.VerifierMap) > 0 {
-			for _, value := range controllers.VerifierMap {
-				activeVerifiers = append(activeVerifiers, value)
-			}
-		} else {
-			activeVerifiers = configVerifiers
-		}
-
-		// check if there are active stores from crd controller
-		// else use stores from configuration
-		if len(controllers.StoreMap) > 0 {
-			for _, value := range controllers.StoreMap {
-				activeStores = append(activeStores, value)
-			}
-		} else {
-			activeStores = configStores
-		}
-
-		// return executor with latest configuration
-		executor := ef.Executor{
-			Verifiers:      activeVerifiers,
-			ReferrerStores: activeStores,
-			PolicyEnforcer: policy,
-			Config:         &cf.ExecutorConfig,
-		}
-		return &executor
-	}, "", "") // TODO: fix the tls logic
-
-	if err != nil {
-		os.Exit(1)
-	}
-	logrus.Infof("starting server at" + httpServerAddress)
-	if err := server.Run(); err != nil {
-		os.Exit(1)
-	}
-}
-
-func main() {
+func StartManager() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -190,12 +123,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	go startServer()
-
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
-
 }

@@ -29,7 +29,7 @@ func TestStoreAdd_EmptyParameter(t *testing.T) {
 		Name: "oras",
 	}
 
-	storeAddOrReplace(testStoreSpec, "testObject")
+	storeAddOrReplace(testStoreSpec, getResourceKey("testnamespace", "testObject"))
 	if len(StoreMap) != 1 {
 		t.Fatalf("Store map expected size 1, actual %v", len(StoreMap))
 	}
@@ -53,10 +53,11 @@ func TestStore_UpdateAndDelete(t *testing.T) {
 	resetStoreMap()
 	// add a Store
 
-	var objectName = "testObject"
+	var resource = getResourceKey("testnamespace", "testObject")
+
 	var testStoreSpec = getOrasStoreSpec()
 
-	storeAddOrReplace(testStoreSpec, objectName)
+	storeAddOrReplace(testStoreSpec, resource)
 
 	if len(StoreMap) != 1 {
 		t.Fatalf("Store map expected size 1, actual %v", len(StoreMap))
@@ -67,14 +68,14 @@ func TestStore_UpdateAndDelete(t *testing.T) {
 		Name: "oras",
 	}
 
-	storeAddOrReplace(updatedSpec, objectName)
+	storeAddOrReplace(updatedSpec, resource)
 
 	// validate no Store has been added
 	if len(StoreMap) != 1 {
 		t.Fatalf("Store map should be 1 after replacement, actual %v", len(StoreMap))
 	}
 
-	storeRemove(objectName)
+	storeRemove(resource)
 
 	if len(StoreMap) != 0 {
 		t.Fatalf("Store map should be 0 after deletion, actual %v", len(StoreMap))

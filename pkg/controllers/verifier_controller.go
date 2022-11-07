@@ -18,7 +18,6 @@ package controllers
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	configv1alpha1 "github.com/deislabs/ratify/api/v1alpha1"
@@ -41,7 +40,8 @@ type VerifierReconciler struct {
 
 var (
 	// a map to track of active verifiers
-	VerifierMap = map[string]vr.ReferenceVerifier{}
+	VerifierMap    = map[string]vr.ReferenceVerifier{}
+	verifierLogger = log.Log
 )
 
 //+kubebuilder:rbac:groups=config.ratify.deislabs.io,resources=verifiers,verbs=get;list;watch;create;update;patch;delete
@@ -59,26 +59,28 @@ var (
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.2/pkg/reconcile
 func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 
-	_ = log.FromContext(ctx)
+	verifierLogger = log.FromContext(ctx)
 
 	var verifier configv1alpha1.Verifier
+	var resource = getResourceKey(req.Namespace, req.Name)
+	storeLogger.Info(fmt.Sprintf("reconciling verifier '%v'", resource))
 
 	if err := r.Get(ctx, req.NamespacedName, &verifier); err != nil {
 
 		if apierrors.IsNotFound(err) {
-			log.Log.Info(fmt.Sprintf("delete event detected, removing verifier %v", req.Name))
-			verifierRemove(req.Name)
+			verifierLogger.Info(fmt.Sprintf("delete event detected, removing verifier %v", req.Name))
+			verifierRemove(resource)
 		} else {
-			log.Log.Error(err, "unable to fetch verifier")
+			verifierLogger.Error(err, "unable to fetch verifier")
 		}
 
 		return ctrl.Result{}, err
 	}
 
-	err := verifierAddOrReplace(verifier.Spec, req.Name)
+	err := verifierAddOrReplace(verifier.Spec, resource)
 
 	if err != nil {
-		log.Log.Error(err, "unable to create verifier from verifier crd")
+		verifierLogger.Error(err, "unable to create verifier from verifier crd")
 		return ctrl.Result{}, err
 	}
 
@@ -90,11 +92,9 @@ func (r *VerifierReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 func verifierAddOrReplace(spec configv1alpha1.VerifierSpec, objectName string) error {
 
 	verifierConfig, err := specToVerifierConfig(spec)
-	if spec.Name == "test" {
-		err = errors.New("math: square root of negative number")
-	}
+
 	if err != nil {
-		log.Log.Error(err, "unable to convert crd specification to verifier config")
+		verifierLogger.Error(err, "unable to convert crd specification to verifier config")
 		return err
 	}
 
@@ -104,12 +104,11 @@ func verifierAddOrReplace(spec configv1alpha1.VerifierSpec, objectName string) e
 	verifierReference, err := vf.CreateVerifierFromConfig(verifierConfig, verifierConfigVersion, []string{spec.Address})
 
 	if err != nil || verifierReference == nil {
-		log.Log.Error(err, "unable to create verifier from verifier config")
+		verifierLogger.Error(err, "unable to create verifier from verifier config")
 		return err
-	} else {
-		VerifierMap[objectName] = verifierReference
-		log.Log.Info(fmt.Sprintf("verifier '%v' added to verifier map", verifierReference.Name()))
 	}
+	VerifierMap[objectName] = verifierReference
+	verifierLogger.Info(fmt.Sprintf("verifier '%v' added to verifier map", verifierReference.Name()))
 
 	return nil
 }
@@ -131,7 +130,7 @@ func specToVerifierConfig(verifierSpec configv1alpha1.VerifierSpec) (config.Veri
 		var propertyMap map[string]interface{}
 		err := json.Unmarshal(verifierSpec.Parameters.Raw, &propertyMap)
 		if err != nil {
-			log.Log.Error(err, "unable to decode verifier parameters", "Parameters.Raw", verifierSpec.Parameters.Raw)
+			verifierLogger.Error(err, "unable to decode verifier parameters", "Parameters.Raw", verifierSpec.Parameters.Raw)
 			return config.VerifierConfig{}, err
 		}
 		for key, value := range propertyMap {

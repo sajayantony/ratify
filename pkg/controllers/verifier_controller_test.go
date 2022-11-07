@@ -37,8 +37,9 @@ func TestVerifierAdd_EmptyParameter(t *testing.T) {
 		Name:          "notaryv2",
 		ArtifactTypes: "application/vnd.cncf.notary.v2.signature",
 	}
+	var resource = getResourceKey("testnamespace", "notaryv2")
 
-	verifierAddOrReplace(testVerifierSpec, "testObject")
+	verifierAddOrReplace(testVerifierSpec, resource)
 	if len(VerifierMap) != 1 {
 		t.Fatalf("Verifier map expected size 1, actual %v", len(VerifierMap))
 	}
@@ -62,10 +63,11 @@ func TestVerifier_UpdateAndDelete(t *testing.T) {
 	resetVerifierMap()
 	// add a verifier
 
-	var objectName = "testObject"
+	var resource = getResourceKey("testnamespace", "licensechecker")
+
 	var testVerifierSpec = getDefaultLicenseCheckerSpec()
 
-	verifierAddOrReplace(testVerifierSpec, objectName)
+	verifierAddOrReplace(testVerifierSpec, resource)
 
 	if len(VerifierMap) != 1 {
 		t.Fatalf("Verifier map expected size 1, actual %v", len(VerifierMap))
@@ -74,14 +76,14 @@ func TestVerifier_UpdateAndDelete(t *testing.T) {
 	// modify the verifier
 	var parametersString = "{\"allowedLicenses\":[\"MIT\",\"GNU\"]}"
 	testVerifierSpec = getLicenseCheckerFromParam(parametersString)
-	verifierAddOrReplace(testVerifierSpec, objectName)
+	verifierAddOrReplace(testVerifierSpec, resource)
 
 	// validate no verifier has been added
 	if len(VerifierMap) != 1 {
 		t.Fatalf("Verifier map should be 1 after replacement, actual %v", len(VerifierMap))
 	}
 
-	verifierRemove(objectName)
+	verifierRemove(resource)
 
 	if len(VerifierMap) != 0 {
 		t.Fatalf("Verifier map should be 0 after deletion, actual %v", len(VerifierMap))

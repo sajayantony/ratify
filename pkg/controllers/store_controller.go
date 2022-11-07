@@ -41,7 +41,8 @@ type StoreReconciler struct {
 
 var (
 	// a map to track active stores
-	StoreMap = map[string]referrerstore.ReferrerStore{}
+	StoreMap    = map[string]referrerstore.ReferrerStore{}
+	storeLogger = log.Log
 )
 
 //+kubebuilder:rbac:groups=config.ratify.deislabs.io,resources=stores,verbs=get;list;watch;create;update;patch;delete
@@ -54,25 +55,27 @@ var (
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.2/pkg/reconcile
 func (r *StoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	storeLogger := log.FromContext(ctx)
 
 	var store configv1alpha1.Store
+	var resource = getResourceKey(req.Namespace, req.Name)
+	storeLogger.Info(fmt.Sprintf("reconciling store '%v'", resource))
 
 	if err := r.Get(ctx, req.NamespacedName, &store); err != nil {
 
 		if apierrors.IsNotFound(err) {
-			log.Log.Info(fmt.Sprintf("deletion detected, removing store %v", req.Name))
-			storeRemove(req.Name)
+			storeLogger.Info(fmt.Sprintf("deletion detected, removing store %v", req.Name))
+			storeRemove(resource)
 		} else {
-			log.Log.Error(err, "unable to fetch store")
+			storeLogger.Error(err, "unable to fetch store")
 		}
 
 		return ctrl.Result{}, err
 	}
 
-	err := storeAddOrReplace(store.Spec, req.Name)
+	err := storeAddOrReplace(store.Spec, resource)
 	if err != nil {
-		log.Log.Error(err, "unable to create store from store crd")
+		storeLogger.Error(err, "unable to create store from store crd")
 		return ctrl.Result{}, err
 	}
 
@@ -88,7 +91,7 @@ func (r *StoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 // Creates a store reference from CRD spec and add store to map
-func storeAddOrReplace(spec configv1alpha1.StoreSpec, objectName string) error {
+func storeAddOrReplace(spec configv1alpha1.StoreSpec, fullname string) error {
 	storeConfig, err := specToStoreConfig(spec)
 
 	// factory only support a single version of configuration today
@@ -97,19 +100,19 @@ func storeAddOrReplace(spec configv1alpha1.StoreSpec, objectName string) error {
 	storeReference, err := sf.CreateStoreFromConfig(storeConfig, storeConfigVersion, []string{spec.Address})
 
 	if err != nil || storeReference == nil {
-		log.Log.Error(err, "store factory failed to create store from store config")
+		storeLogger.Error(err, "store factory failed to create store from store config")
 		return err
-	} else {
-		StoreMap[objectName] = storeReference
-		log.Log.Info(fmt.Sprintf("store '%v' added to store map", storeReference.Name()))
 	}
+
+	StoreMap[fullname] = storeReference
+	storeLogger.Info(fmt.Sprintf("store '%v' added to store map", storeReference.Name()))
 
 	return nil
 }
 
 // Remove store from map
-func storeRemove(objectName string) {
-	delete(StoreMap, objectName)
+func storeRemove(resourceName string) {
+	delete(StoreMap, resourceName)
 }
 
 // Returns a store reference from spec
@@ -123,7 +126,7 @@ func specToStoreConfig(storeSpec configv1alpha1.StoreSpec) (config.StorePluginCo
 		var propertyMap map[string]interface{}
 		err := json.Unmarshal(storeSpec.Parameters.Raw, &propertyMap)
 		if err != nil {
-			log.Log.Error(err, "unable to decode store parameters", "Parameters.Raw", storeSpec.Parameters.Raw)
+			storeLogger.Error(err, "unable to decode store parameters", "Parameters.Raw", storeSpec.Parameters.Raw)
 			return config.StorePluginConfig{}, err
 		}
 		for key, value := range propertyMap {
