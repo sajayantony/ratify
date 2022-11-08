@@ -17,9 +17,32 @@ SLEEP_TIME=1
     assert_success
     run kubectl run demo1 --image=wabbitnetworks.azurecr.io/test/net-monitor:unsigned
     assert_failure
+
+    echo "cleaning up"
+    run kubectl delete pod demo
+}
+
+@test "validate crd add, replace and delete" {    
+    skip "TODO: setup local test registry to enable better CRD e2e testing, default crd should installed the notary verifier"
+    echo "adding license checker, delete notary verifier and validate deployment fails due to missing notary verifier"
+    run kubectl apply -f ./config/samples/config_v1alpha1_verifier_licensechecker.yaml
+    run kubectl delete verifiers.config.ratify.deislabs.io/verifier-notary
+    assert_success
+    run kubectl run demo --image=ratify.azurecr.io/testimage:signed
+    assert_failure
+
+    echo "Add notary verifier and validate deployment succeeds"
+    run kubectl apply -f ./config/samples/config_v1alpha1_verifier_notary.yaml
+    assert_success
+    run kubectl run demo --image=ratify.azurecr.io/testimage:signed
+    assert_success
+
+    echo "cleaning up"
+    run kubectl delete pod demo
 }
 
 @test "configmap update test" {
+    skip "Skipping test for now as we are no longer watching for configfile update in a k8 environment.This test ensures we are watching config file updates in a non-kub scenario"
     run kubectl apply -f ./library/default/template.yaml
     assert_success
     sleep 5

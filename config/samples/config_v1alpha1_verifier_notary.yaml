@@ -1,0 +1,12 @@
+apiVersion: config.ratify.deislabs.io/v1alpha1
+kind: Verifier
+metadata:
+  name: verifier-notary
+spec:
+  name: test
+  artifactTypes: application/vnd.cncf.notary.v2.signature
+  address: "/user/local/Nexist"
+  parameters:
+    verificationCerts: 
+    - /usr/local/v1/test.pem
+     
