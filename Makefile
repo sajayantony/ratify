@@ -126,9 +126,11 @@ e2e-deploy-gatekeeper: e2e-helm-install
 
 e2e-deploy-ratify:
 	docker build -f ./httpserver/Dockerfile -t localbuild:test .
+	docker build -f crd.Dockerfile -t localbuildcrd:test .
 	kind load docker-image --name kind localbuild:test
+	kind load docker-image --name kind localbuildcrd:test
 	./.staging/helm/linux-amd64/helm install ratify \
-    ./charts/ratify --atomic --namespace ratify-service --create-namespace --set image.repository=localbuild --set image.tag=test
+    ./charts/ratify --atomic --namespace ratify-service --create-namespace --set image.repository=localbuild --set image.crdRepository=localbuildcrd --set image.tag=test
 
 ##@ Development
 

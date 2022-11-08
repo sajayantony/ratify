@@ -57,7 +57,7 @@ func NewCmdServe(argv ...string) *cobra.Command {
 	flags.StringVarP(&opts.configFilePath, "config", "c", "", "Config File Path")
 	flags.StringVar(&opts.certDirectory, "cert-dir", "", "Path to ratify certs")
 	flags.StringVar(&opts.caCertFile, "ca-cert-file", "", "Path to CA cert file")
-	flags.BoolVar(&opts.enableCrdManager, "crd-manager", false, "Start crd manager if enabled")
+	flags.BoolVar(&opts.enableCrdManager, "enable-crd-manager", false, "Start crd manager if enabled")
 	return cmd
 }
 
